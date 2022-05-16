@@ -22,14 +22,15 @@ defmodule Cooperation.Player do
   @spec draw_cards(%Player{}, pos_integer) :: {:ok | :few, %Player{}}
   def draw_cards(player, num_cards_wanted) do
     {drawn, pile} = Enum.split(player.draw_pile, num_cards_wanted)
-    {_, player} = get_and_update_in(player, [:hand], &{&1, &1 ++ drawn})
-    {_, player} = get_and_update_in(player, [:draw_pile], &{&1, pile})
+
+    player
+    |> Map.update!(:hand, &(&1 ++ drawn))
+    |> Map.put(:draw_pile, pile)
 
     # case Enum.count(drawn) < num_cards_wanted do
     #   true -> {:few, player}
     #   false -> {:ok, player}
     # end
-    player
   end
 
   # TODO let player pick the cards
@@ -37,20 +38,9 @@ defmodule Cooperation.Player do
   # Have to check because someone could manipulate the frontend to send non-existent cards and keep their whole hand
   def discard_cards(player, num_cards) do
     {discarded, new_hand} = Enum.split(player.hand, num_cards)
-    {_, player} = get_and_update_in(player, [:discard_pile], &{&1, &1 ++ discarded})
-    {_, player} = get_and_update_in(player, [:hand], &{&1, new_hand})
+
     player
-  end
-
-  # When passed a list of players, discard cards for the right player
-  def discard_cards([] = _players, _id, _num_cards), do: []
-
-  def discard_cards([player | tail] = _players, id, num_cards)
-      when player.id == id do
-    [discard_cards(player, num_cards) | discard_cards(tail, id, num_cards)]
-  end
-
-  def discard_cards([player | tail] = _players, id, num_cards) do
-    [player | discard_cards(tail, id, num_cards)]
+    |> Map.update!(:discard_pile, &(&1 ++ discarded))
+    |> Map.put(:hand, new_hand)
   end
 end

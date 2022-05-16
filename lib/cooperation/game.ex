@@ -8,9 +8,11 @@ defmodule Cooperation.Game do
   end
 
   def init(_) do
+    # TODO should be game struct?
     {:ok, %{players: %{1 => Player.new()}, rules: Rules.new()}}
   end
 
+  # TODO shouldn't allow > 5 players (bug in rules?)
   def handle_call(:add_player, _from, game_state) do
     with {:ok, rules} <- Rules.check(game_state.rules, :add_player) do
       game_state
@@ -22,6 +24,8 @@ defmodule Cooperation.Game do
     end
   end
 
+  # TODO after setup, transition to choose for 1st player
+  # (Don't bother having a :setup state? Game handles it almost instantly)
   def handle_call(:start_game, _from, game_state) do
     with {:ok, rules} <- Rules.check(game_state.rules, :start_game) do
       game_state
@@ -111,14 +115,10 @@ defmodule Cooperation.Game do
   end
 
   def discard_cards(game_state, player_id, num_cards) do
-    # TODO Get the specific player, call relevant Player function, then update that player in the nested map
-    players = Player.discard_cards(game_state.players, player_id, num_cards)
-    %{game_state | players: players}
+    update_in(game_state, [:players, player_id], &Player.discard_cards(&1, num_cards))
   end
 
   def draw_cards(game_state, player_id, num_cards) do
-    # TODO Get the specific player, call relevant Player function, then update that player in the nested map
-    players = Player.draw_cards(game_state.players, player_id, num_cards)
-    %{game_state | players: players}
+    update_in(game_state, [:players, player_id], &Player.draw_cards(&1, num_cards))
   end
 end
