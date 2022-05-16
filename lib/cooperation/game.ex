@@ -4,12 +4,22 @@ defmodule Cooperation.Game do
   alias Cooperation.{Deck, Player, Rules}
 
   def start_link() do
-    GenServer.start_link(__MODULE__, [], [])
+    GenServer.start_link(__MODULE__, [], name: register_game())
   end
 
   def init(_) do
     # TODO should be game struct?
     {:ok, %{players: %{1 => Player.new()}, rules: Rules.new()}}
+  end
+
+  def register_game() do
+    {:via, Registry, {Registry.Game, generate_id()}}
+  end
+
+  def generate_id() do
+    0..6
+    |> Enum.map(fn _ -> Enum.random(?a..?z) end)
+    |> to_string
   end
 
   # TODO shouldn't allow > 5 players (bug in rules?)
@@ -75,7 +85,7 @@ defmodule Cooperation.Game do
     {:reply, message, game_state}
   end
 
-  def get_next_id(%{}), do: 0
+  def get_next_id(players) when players == %{}, do: 1
 
   def get_next_id(players) do
     players |> Map.keys() |> Enum.max() |> Kernel.+(1)

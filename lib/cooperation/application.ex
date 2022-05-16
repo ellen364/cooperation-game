@@ -8,8 +8,7 @@ defmodule Cooperation.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: Cooperation.Worker.start_link(arg)
-      # {Cooperation.Worker, arg}
+      {Registry, keys: :unique, name: Registry.Game}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
