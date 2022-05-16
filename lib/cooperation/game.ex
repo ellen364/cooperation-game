@@ -1,25 +1,25 @@
 defmodule Cooperation.Game do
-  use GenServer
+  use GenServer, start: {__MODULE__, :start_link, []}, restart: :transient
 
   alias Cooperation.{Deck, Player, Rules}
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, [], name: register_game())
+  def start_link(public_id) do
+    GenServer.start_link(__MODULE__, [], name: registry_tuple(public_id))
   end
 
   def init(_) do
     # TODO should be game struct?
-    {:ok, %{players: %{1 => Player.new()}, rules: Rules.new()}}
+    # games timeout after 30 min
+    timeout = 30 * 60 * 1000
+    {:ok, %{players: %{1 => Player.new()}, rules: Rules.new()}, timeout}
   end
 
-  def register_game() do
-    {:via, Registry, {Registry.Game, generate_id()}}
+  def registry_tuple(public_id) do
+    {:via, Registry, {Registry.Game, public_id}}
   end
 
-  def generate_id() do
-    0..6
-    |> Enum.map(fn _ -> Enum.random(?a..?z) end)
-    |> to_string
+  def handle_info(:timeout, game_state) do
+    {:stop, {:shutdown, :timeout}, game_state}
   end
 
   # TODO shouldn't allow > 5 players (bug in rules?)
