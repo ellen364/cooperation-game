@@ -1,34 +1,30 @@
 defmodule Cooperation.GameSupervisor do
-  use Supervisor
   alias Cooperation.Game
 
-  def start_link(_) do
-    Supervisor.start_link(__MODULE__, :ok, name: __MODULE__)
+  def start_game(name) do
+    DynamicSupervisor.start_child(
+      __MODULE__,
+      {Cooperation.Game, name: registry_tuple(name)}
+    )
   end
 
-  def init(:ok) do
-    Supervisor.init([Game], strategy: :simple_one_for_one)
-  end
+  # def stop_game(public_id) do
+  #   Supervisor.terminate_child(__MODULE__, get_process_id(public_id))
+  # end
 
-  # TODO when should the public ID be generated? (Currently passed to start game, meaning it must be generated earlier.)
-  def start_game(public_id) do
-    Supervisor.start_child(__MODULE__, [public_id])
-  end
-
-  # TODO investigate warnings about Supervisor being deprecated
-  def stop_game(public_id) do
-    Supervisor.terminate_child(__MODULE__, get_process_id(public_id))
-  end
-
-  def generate_public_id() do
+  def generate_name() do
     0..6
     |> Enum.map(fn _ -> Enum.random(?a..?z) end)
     |> to_string
   end
 
-  defp get_process_id(public_id) do
-    public_id
-    |> Game.registry_tuple()
+  def registry_tuple(name) do
+    {:via, Registry, {Registry.Game, name}}
+  end
+
+  defp get_process_id(name) do
+    name
+    |> registry_tuple()
     |> GenServer.whereis()
   end
 end

@@ -7,7 +7,7 @@ defmodule Cooperation.Application do
   def start(_type, _args) do
     children = [
       {Registry, keys: :unique, name: Registry.Game},
-      Cooperation.GameSupervisor
+      {DynamicSupervisor, strategy: :one_for_one, name: Cooperation.GameSupervisor}
     ]
 
     opts = [strategy: :one_for_one, name: Cooperation.Supervisor]
